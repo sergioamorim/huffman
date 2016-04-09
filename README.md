@@ -7,6 +7,7 @@ Professor responsável: Márcio Ribeiro [http://ic.ufal.br/marcio]
 
 Membros da equipe:
 
-Bharbara Correia Costa Coutinho Pereira bharbara.costa@hotmail.com
-Sergio Augusto Teixeira Amorim sata@ic.ufal.br
+- Bharbara Correia Costa Coutinho Pereira bharbara.costa@hotmail.com
+- Sergio Augusto Teixeira Amorim sata@ic.ufal.br
+
 Trello do projeto: https://trello.com/b/ABXiNDng
