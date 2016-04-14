@@ -13,15 +13,57 @@ int main (int args_count, char *args[]) {
 	char *output_file_name;
 	char *project_path = get_project_path(args[ZERO]);
 
+	int arg_file_name_position;
+
 	if (args_count <= 1) {
-		fprintf(stderr, "ERRO: é preciso informar argumentos.");
+		fprintf(stderr, "ERRO: é preciso informar argumentos.\n");
 		print_help(args[ZERO], project_path);
-	}
-	if (argument_is_set(args_count, args, 'i') != FALSE) {
+		return (ERROR);
 	}
 
-	input_file = fopen("input.txt", "r");
-	output_file = fopen("output.txt", "w");
+	if (argument_is_set(args_count, args, 'i') == FALSE) {
+		fprintf(stderr, "ERRO: é necessário informar o arquivo de entrada.");
+		fprintf(stderr, "\n");
+		print_help(args[ZERO], project_path);
+		return (ERROR);
+	}
+
+	if (argument_is_set(args_count, args, 'c') == FALSE
+		&& argument_is_set(args_count, args, 'x') == FALSE) {
+		fprintf(stderr, "ERRO: é necessário informar se o arquivo de entrad");
+		fprintf(stderr, "a deve ser comprimido ou ex-\n\ttraído.\n");
+		print_help(args[ZERO], project_path);
+		return (ERROR);
+	}
+
+	if (argument_is_set(args_count, args, 'c') != FALSE
+		&& argument_is_set(args_count, args, 'x') != FALSE) {
+		fprintf(stderr, "ERRO: não é possível extrair e comprimir o mesmo a");
+		fprintf(stderr, "rquivo.\n");
+		print_help(args[ZERO], project_path);
+		return (ERROR);
+	}
+
+	arg_file_name_position = (argument_is_set(args_count, args, 'i') + 1);
+	if (arg_file_name_position == args_count) {
+		fprintf(stderr, "ERRO: é necessário informar o caminho para o arqui");
+		fprintf(stderr, "vo de entrada.\n");
+		print_help(args[ZERO], project_path);
+		return (ERROR);
+	}
+
+	input_file_name = args[arg_file_name_position];
+
+	if (argument_is_set(args_count, args, 'o') == FALSE
+		|| (argument_is_set(args_count, args, 'o') + 1) == args_count) {
+		output_file_name = args[arg_file_name_position];
+	}
+	else {
+		output_file_name = (argument_is_set(args_count, args, 'o') + 1);
+	}
+
+	input_file = fopen(input_file_name, "r");
+	output_file = fopen(output_file_name, "w");
 
 	int ascii[255];
 
