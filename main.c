@@ -1,11 +1,24 @@
-#include <stdio.h>
-#include "adt.h"
-#include "global.h"
+#include <stdio.h> /* funções de entrada e saída */
+#include "adt.h" /* tipos abstratos usados no projeto */
+#include "global.h" /* constantes e tipos globais */
+#include "arguments.h" /* funções de tratamento de argumentos */
 
-int main () {
+
+int main (int args_count, char *args[]) {
 
 	FILE *input_file;
 	FILE *output_file;
+
+	char *input_file_name;
+	char *output_file_name;
+	char *project_path = get_project_path(args[ZERO]);
+
+	if (args_count <= 1) {
+		fprintf(stderr, "ERRO: é preciso informar argumentos.");
+		print_help(args[ZERO], project_path);
+	}
+	if (argument_is_set(args_count, args, 'i') != FALSE) {
+	}
 
 	input_file = fopen("input.txt", "r");
 	output_file = fopen("output.txt", "w");
