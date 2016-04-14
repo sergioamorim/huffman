@@ -1,1 +1,14 @@
-[-c] [-x] INPUT_FILE [-o OUTPUT_FILE]
+[-h] [-c] [-x] -i INPUT_FILE [-o OUTPUT_FILE]
+
+Comprime ou extrai arquivos usando a Codificação de Huffman.
+
+argumentos:
+
+  -h 		exibe esta mensagem de ajuda e encerra o programa
+  -c 		comprimir o arquivo de entrada
+  -x		extrair o arquivo de entrada
+  -i INPUT_FILE
+		arquivo de entrada do programa
+  -o OUTPUT_FILE
+		arquivo de saída do programa sem extensão (padrão: nome do arquivo de
+		entrada)
