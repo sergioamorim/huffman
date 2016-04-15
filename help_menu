@@ -1,4 +1,4 @@
-[-h] [-c] [-x] -i INPUT_FILE [-o OUTPUT_FILE]
+ [-h] [-c] [-x] -i INPUT_FILE [-o OUTPUT_FILE]
 
 Comprime ou extrai arquivos usando a Codificação de Huffman.
 
