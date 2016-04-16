@@ -40,6 +40,9 @@ int main (int args_count, char *args[]) {
 	 * da está */
 	int arg_file_name_position;
 
+	/* hash table que guardará o binário correspondente a cada caracter do ar-
+	 * quivo */
+	hash_table_t *chars_table;
 
 	/* caso nenhum argumento tenha sido informado, não é possível continuar o
 	 * programa */
@@ -150,7 +153,7 @@ int main (int args_count, char *args[]) {
 
 		/* guardará a quantidade de vezes que cada caracter ascii aparece no
 		 * arquivo */
-		int ascii[255];
+		int ascii[ASCII_MAX];
 
 		queue_t *tree; /* fila de prioridade que se tornará a árvore de huff*/
 		node_t *tree_root; /* guardará o nó raíz da árvore de huffman */
@@ -159,7 +162,7 @@ int main (int args_count, char *args[]) {
 
 		int i;
 		/* inicia todas as posições do array de quantidades com ZERO */
-		for (i = ZERO; i < 255; i++) {
+		for (i = ZERO; i < ASCII_MAX; i++) {
 			ascii[i] = ZERO;
 		}
 
@@ -176,7 +179,7 @@ int main (int args_count, char *args[]) {
 		/* com o array de quantidades pronto, enfileira todos os caracteres e
 		 * suas respectivas quantidades em que aparecem no arquivo na fila de
 		 * prioridades que se transformará na árvore de huffman */
-		for (i = ZERO; i < 255; i++) {
+		for (i = ZERO; i < ASCII_MAX; i++) {
 			if (ascii[i] != ZERO) {
 				if (i != '*') {
 					tree = enqueue(tree, ascii[i], (char)i);
@@ -196,6 +199,8 @@ int main (int args_count, char *args[]) {
 		 * o nó raíz */
 		tree_root = huffmanrize_queue(tree);
 
+		chars_table = make_huff_table(tree_root, ascii);
+
 		/* imprime o cabeçalho do arquivo HUFFMAN, exceto o tamanho do lixo
 		 * que será acrescentado posteriormente - em caso de falha, o programa
 		 * é encerrado e o arquivo aberto será fechado (em caso de falha, o
@@ -206,6 +211,20 @@ int main (int args_count, char *args[]) {
 		}
 
 		/* comprimir arquivo */
+
+
+		/* renova o arquivo input_file, visto que ele foi consumido ao ler por
+		 * por completo para contar os caracteres e formar a árvore */
+		input_file = fopen(input_file_name, "r");
+
+		current_char = getc(input_file);
+		while (current_char != EOF) {
+
+
+
+			current_char = getc(input_file);
+		}
+
 
 	}
 	/* caso o argumento para compressão não seja passado, então o de extração
