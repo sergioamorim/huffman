@@ -16,3 +16,11 @@ typedef int bool;
 
 /* Constante de caracter nulo */
 #define NULL_CHAR ('\0')
+
+/* definição do número primo maior que o inteiro correspondente ao maior char
+ * na tabela ascii; é primo para garantir que não haja colisões na hash table
+ */
+#define ASCII_MAX_PRIME 257
+
+/* número de elementos na tabela ascii */
+#define ASCII_MAX 256
