@@ -22,6 +22,31 @@ typedef struct queue_t__ {
     int size;
 } queue_t;
 
+typedef struct bit_char_t__ {
+	int size;
+	unsigned char b_char;
+} bit_char_t;
+
+typedef struct element_t__ {
+	int key;
+	bit_char_t value;
+	struct element_t__ *next_element;
+} element_t;
+
+typedef struct hash_table_t__ {
+	element_t *table[ASCII_MAX_PRIME];
+} hash_table_t;
+
+
+hash_table_t *create_hash_table(int);
+
+void insert_on_hash_table (hash_table_t *, int, int, unsigned char, int);
+
+int get_of_hash_table (hash_table_t *, int);
+
+int hash_function(int, int);
+
+hash_table_t *make_huff_table(node_t *, int *);
 
 /* cria uma fila de prioridade vazia e a retorna */
 queue_t *create_queue();
@@ -59,8 +84,118 @@ int tree_size(node_t *);
 int print_size_of_tree(FILE *, node_t *);
 
 /* retorna o byte de entrada com o bit na posição fornecida setado */
-unsigned int set_bit(unsigned char current_byte, int position);
+unsigned int set_bit(unsigned char, int);
 
+int bits_quantity(node_t *, char);
+
+unsigned char make_bit_char(node_t *, char);
+
+bool is_on_tree(node_t *, char);
+
+
+hash_table_t *make_huff_table(node_t *huff_tree, int *ascii) {
+	hash_table_t *hash_table = create_hash_table(ASCII_MAX);
+	int i;
+	int size;
+	unsigned char b_char;
+	for (i = ZERO; i < ASCII_MAX; i++) {
+		if (ascii[i] != ZERO) {
+			size = bits_quantity(huff_tree, i);
+			b_char = make_bit_char(huff_tree, i);
+			insert_on_hash_table(hash_table, i, size, b_char,
+								 ASCII_MAX_PRIME);
+		}
+	}
+	return (hash_table);
+}
+
+int bits_quantity(node_t *binary_tree, char character) {
+	if (binary_tree != NULL) {
+		if (binary_tree->character == character) {
+			return (ZERO);
+		}
+		if (binary_tree->left != NULL) {
+			if (binary_tree->right == NULL) {
+				return (bits_quantity(binary_tree->left, character) + 1);
+			}
+			if (is_on_tree(binary_tree->left, character) != FALSE) {
+				return(bits_quantity(binary_tree->left, character) + 1);
+			}
+			return (bits_quantity(binary_tree->right, character) + 1);
+		}
+		if (binary_tree->right != NULL) {
+			return (bits_quantity(binary_tree->right, character) + 1);
+		}
+	}
+	return (ERROR);
+}
+
+bool is_on_tree(node_t *binary_tree, char character) {
+	if (binary_tree != NULL) {
+		if (binary_tree->character == character) {
+			return (TRUE);
+		}
+		return (is_on_tree(binary_tree->left, character)
+				|| is_on_tree(binary_tree->right, character));
+	}
+	return (FALSE);
+}
+
+unsigned char make_bit_char(node_t *huff_tree, char character) {
+	unsigned char bit_char = (unsigned int)ZERO;
+	node_t *current_node = huff_tree;
+	if (huff_tree != NULL) {
+		if (huff_tree->character == character) {
+			return (bit_char);
+		}
+		while(current_node != NULL
+				&& current_node->character != character) {
+			
+			bit_char = (bit_char << 1);
+			if (is_on_tree(current_node->right, character)) {
+				bit_char = set_bit(bit_char, 0);
+				current_node = current_node->right;
+			}
+			else {
+				current_node = current_node->left;
+			}
+		}
+	}
+	return (bit_char);
+}
+
+hash_table_t* create_hash_table(int addresses_quantity) {
+	hash_table_t *hash_table = malloc(sizeof(hash_table_t));
+	int i;
+	for (i = ZERO; i < addresses_quantity; i++) {
+		hash_table->table[i] = NULL;
+	}
+	return hash_table;
+}
+
+int hash_function(int key, int addresses_quantity){
+	return (key % addresses_quantity);
+}
+
+void insert_on_hash_table (hash_table_t *hash_table, int key, int size,
+							unsigned char b_char, int addresses_quantity) {
+	element_t *new_element = (element_t *)malloc(sizeof(element_t));;
+	int hash = hash_function(key, addresses_quantity);
+	new_element->key = key;
+	new_element->value.size = size;
+	new_element->value.b_char = b_char;
+	new_element->next_element = NULL;
+	if (hash_table->table[hash] != NULL) {
+		element_t *current_element = hash_table->table[hash];
+		while (current_element->next_element != NULL) {
+			current_element = current_element->next_element;
+		}
+		current_element->next_element = new_element;
+	}
+	else {
+		hash_table->table[hash] = new_element;
+	}
+}
 
 /* cria uma fila de prioridade vazia e a retorna */
 queue_t *create_queue() {
