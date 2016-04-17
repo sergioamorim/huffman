@@ -43,6 +43,13 @@ int main (int args_count, char *args[]) {
 	/* hash table que guardará o binário correspondente a cada caracter do ar-
 	 * quivo */
 	hash_table_t *chars_table;
+	/* guardará o valor de um caracter codificado e o número de bits ocupado
+	 * por ele */
+	bit_char_t current_bit_char;
+
+	/* caracter que será escrito com os caracteres codificados antes de passar
+	 * para o arquivo */
+	unsigned int writing_char;
 
 	/* caso nenhum argumento tenha sido informado, não é possível continuar o
 	 * programa */
@@ -136,7 +143,7 @@ int main (int args_count, char *args[]) {
 	}
 
 	/* abre o arquivo de saída para escrita */
-	output_file = fopen(output_file_name, "w");
+	output_file = fopen(output_file_name, "w+");
 
 	/* caso não seja possível abrir o arquivo de saída, uma mensagem de erro é
 	 * exibida e o programa é encerrado */
@@ -217,12 +224,48 @@ int main (int args_count, char *args[]) {
 		 * por completo para contar os caracteres e formar a árvore */
 		input_file = fopen(input_file_name, "r");
 
+		unsigned int trash_size = (unsigned int)ZERO;
+		int writing_index = 8;
+		writing_char = (unsigned int)ZERO;
+		int bits_to_next_char = ZERO;
 		current_char = getc(input_file);
 		while (current_char != EOF) {
-
-
-
+			current_bit_char = get_of_hash_table(chars_table, current_char);
+			if ((writing_index - current_bit_char.size) < ZERO) {
+				bits_to_next_char = ((writing_index
+										- current_bit_char.size) * (-1));
+				writing_char = writing_char | (current_bit_char.b_char >>
+						   bits_to_next_char);
+				fprintf(output_file, "%c", writing_char);
+				writing_char = (unsigned int)ZERO;
+				writing_index = 8;
+				writing_char = (current_bit_char.b_char <<
+									(writing_index - bits_to_next_char));
+				writing_index -= bits_to_next_char;
+				bits_to_next_char = ZERO;
+			}
+			else if ((writing_index - current_bit_char.size) == ZERO) {
+				writing_char = (writing_char | current_bit_char.b_char);
+				fprintf(output_file, "%c", writing_char);
+				writing_index = 8;
+				writing_char = (unsigned int)ZERO;
+			}
+			else {
+				writing_char = writing_char | (current_bit_char.b_char <<
+						   (writing_index - current_bit_char.size));
+				writing_index -= current_bit_char.size;
+			}
 			current_char = getc(input_file);
+		}
+		if (writing_index != 8){
+			fprintf(output_file, "%c", writing_char);
+			trash_size = (unsigned int)writing_index;
+			fseek(output_file, ZERO, ZERO);
+			current_char = getc(output_file);
+			writing_char = (unsigned int)ZERO;
+			writing_char = (current_char | (trash_size << 5));
+			fseek(output_file, ZERO, ZERO);
+			fprintf(output_file, "%c", writing_char);
 		}
 
 
