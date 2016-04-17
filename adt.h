@@ -11,41 +11,49 @@
 typedef struct node_t__ {
     char character;
     int quantity; /* quantidade de vezes que o character aparece no arquivo */
-    struct node_t__ *next_node;
+    struct node_t__ *next_node; /* próximo nó, quando ainda é uma fila */
     struct node_t__ *left; /* filho à esquerda do nó */
 	struct node_t__ *right; /* filho à esquerda do nó */
 } node_t;
 
 /* estrutura de uma fila */
 typedef struct queue_t__ {
-    node_t *first;
-    int size;
+    node_t *first; /* primeiro nó da fila */
+    int size; /* tamanho da fila */
 } queue_t;
 
+/* estrutura de um caracter codificado, com tamanho */
 typedef struct bit_char_t__ {
-	int size;
-	unsigned char b_char;
+	int size; /* numero de bits do caracter codificado */
+	unsigned char b_char; /* caracter codificado */
 } bit_char_t;
 
+/* estrutura de um elemento de uma hash table */
 typedef struct element_t__ {
-	int key;
-	bit_char_t value;
+	int key; /* caracter sem codificação */
+	bit_char_t value; /* caracter codificado e seu tamanho */
 	struct element_t__ *next_element;
 } element_t;
 
+/* estrutura de uma hash table */
 typedef struct hash_table_t__ {
 	element_t *table[ASCII_MAX_PRIME];
 } hash_table_t;
 
 
+/* cria uma hash table vazia e a retorna */
 hash_table_t *create_hash_table(int);
 
+/* insere um elemento em uma hash table */
 void insert_on_hash_table (hash_table_t *, int, int, unsigned char, int);
 
-int get_of_hash_table (hash_table_t *, int);
+/* retorna um elemento de uma hash table */
+bit_char_t get_of_hash_table (hash_table_t *, int);
 
+/* função para retornar o valor hasheado de uma chave */
 int hash_function(int, int);
 
+/* cria uma hash table com os nós de uma huff tree */
 hash_table_t *make_huff_table(node_t *, int *);
 
 /* cria uma fila de prioridade vazia e a retorna */
@@ -86,18 +94,26 @@ int print_size_of_tree(FILE *, node_t *);
 /* retorna o byte de entrada com o bit na posição fornecida setado */
 unsigned int set_bit(unsigned char, int);
 
+/* retorna a quantidade de bits de um caracter codificado */
 int bits_quantity(node_t *, char);
 
+/* retorna um caracter codificado de acordo com uma huff tree */
 unsigned char make_bit_char(node_t *, char);
 
+/* retorna TRUE se um caracter pertence a uma árvore */
 bool is_on_tree(node_t *, char);
 
 
+/* cria uma hash table com os nós de uma huff tree */
 hash_table_t *make_huff_table(node_t *huff_tree, int *ascii) {
 	hash_table_t *hash_table = create_hash_table(ASCII_MAX);
-	int i;
-	int size;
-	unsigned char b_char;
+	int i; /* será o índice que representará cada um dos caracteres */
+	int size; /* tamanho do caracter codificado */
+	unsigned char b_char; /* caracter codificado */
+
+	/* anda pelo array de quantidades e, para cada caracter que apareceu no
+	 * texto, inclui ele na hash table junto com seu correspondente codificado
+	 * de acordo com a huff tree recebida */
 	for (i = ZERO; i < ASCII_MAX; i++) {
 		if (ascii[i] != ZERO) {
 			size = bits_quantity(huff_tree, i);
@@ -106,30 +122,44 @@ hash_table_t *make_huff_table(node_t *huff_tree, int *ascii) {
 								 ASCII_MAX_PRIME);
 		}
 	}
-	return (hash_table);
+	return (hash_table); /* retorna a hash table criada */
 }
 
+/* retorna a quantidade de bits de um caracter codificado */
 int bits_quantity(node_t *binary_tree, char character) {
+	
 	if (binary_tree != NULL) {
+
+		/* retorna ZERO se o caracter for o próprio da árvore */
 		if (binary_tree->character == character) {
 			return (ZERO);
 		}
 		if (binary_tree->left != NULL) {
+
+			/* se o lado direito não existe mas o lado esquerdo existe, então
+		 	 * retorna recursivamente o lado esquerdo */
 			if (binary_tree->right == NULL) {
 				return (bits_quantity(binary_tree->left, character) + 1);
 			}
+
+			/* se ambos os lados existem, verifica a qual lado o caracter per-
+			 * tence e retorna o lado correspondente recursivamente */
 			if (is_on_tree(binary_tree->left, character) != FALSE) {
 				return(bits_quantity(binary_tree->left, character) + 1);
 			}
 			return (bits_quantity(binary_tree->right, character) + 1);
 		}
+
+		/* se o lado esquerdo não existe mas o lado direito existe, então re-
+		 * torna recursivamente o lado direito */
 		if (binary_tree->right != NULL) {
 			return (bits_quantity(binary_tree->right, character) + 1);
 		}
 	}
-	return (ERROR);
+	return (ERROR); /* se a árvore for nula, retorna ERROR */
 }
 
+/* retorna TRUE se um caracter pertence a uma árvore */
 bool is_on_tree(node_t *binary_tree, char character) {
 	if (binary_tree != NULL) {
 		if (binary_tree->character == character) {
@@ -141,29 +171,44 @@ bool is_on_tree(node_t *binary_tree, char character) {
 	return (FALSE);
 }
 
-unsigned char make_bit_char(node_t *huff_tree, char character) {
-	unsigned char bit_char = (unsigned int)ZERO;
+/* retorna um caracter codificado de acordo com uma huff tree */
+unsigned int make_bit_char(node_t *huff_tree, char character) {
+	unsigned int bit_char = (unsigned int)ZERO; /* inicia o bit_char zerado*/
 	node_t *current_node = huff_tree;
+	
 	if (huff_tree != NULL) {
+
+		/* se for o primeiro caracter da árvore, retorna da forma que está */
 		if (huff_tree->character == character) {
 			return (bit_char);
 		}
+
+		/* navega pela huff tree em busca do caracter e, a cada nível, seta
+		 * ou não o último bit, enquanto arrasta os bits anteriores para a
+		 * esquerda */
 		while(current_node != NULL
 				&& current_node->character != character) {
-			
-			bit_char = (bit_char << 1);
+			/* se o caracter estiver à direita na árvore, seta o último bit e
+			 * anda para a direitra */
 			if (is_on_tree(current_node->right, character)) {
 				bit_char = set_bit(bit_char, 0);
 				current_node = current_node->right;
 			}
+			/* se não estiver à direita, apenas anda para a esquerda */
 			else {
 				current_node = current_node->left;
 			}
+			/* arrasta os bits para a esquerda para setar ou não o próximo */
+			bit_char = (bit_char << 1);
 		}
+		/* retorna os bits uma casa à direita, pois eles foram arrastados à 
+		 * esquerda uma vez a mais que o necessário */
+		bit_char = (bit_char >> 1);
 	}
-	return (bit_char);
+	return (bit_char); /* retorna o bit_char criado */
 }
 
+/* cria uma hash table vazia e a retorna */
 hash_table_t* create_hash_table(int addresses_quantity) {
 	hash_table_t *hash_table = malloc(sizeof(hash_table_t));
 	int i;
@@ -173,12 +218,14 @@ hash_table_t* create_hash_table(int addresses_quantity) {
 	return hash_table;
 }
 
+/* função para retornar o valor hasheado de uma chave */
 int hash_function(int key, int addresses_quantity){
 	return (key % addresses_quantity);
 }
 
-void insert_on_hash_table (hash_table_t *hash_table, int key, int size,
-							unsigned char b_char, int addresses_quantity) {
+/* insere um elemento em uma hash table */
+void insert_on_hash_table(hash_table_t *hash_table, int key, int size,
+						  unsigned char b_char, int addresses_quantity) {
 	element_t *new_element = (element_t *)malloc(sizeof(element_t));;
 	int hash = hash_function(key, addresses_quantity);
 	new_element->key = key;
