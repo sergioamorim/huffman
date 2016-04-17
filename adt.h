@@ -98,7 +98,7 @@ unsigned int set_bit(unsigned char, int);
 int bits_quantity(node_t *, char);
 
 /* retorna um caracter codificado de acordo com uma huff tree */
-unsigned char make_bit_char(node_t *, char);
+unsigned int make_bit_char(node_t *, char);
 
 /* retorna TRUE se um caracter pertence a uma árvore */
 bool is_on_tree(node_t *, char);
@@ -117,6 +117,9 @@ hash_table_t *make_huff_table(node_t *huff_tree, int *ascii) {
 	for (i = ZERO; i < ASCII_MAX; i++) {
 		if (ascii[i] != ZERO) {
 			size = bits_quantity(huff_tree, i);
+			if (size == ZERO) {
+				size = 1;
+			}
 			b_char = make_bit_char(huff_tree, i);
 			insert_on_hash_table(hash_table, i, size, b_char,
 								 ASCII_MAX_PRIME);
@@ -460,4 +463,20 @@ int print_header(FILE *output_file, node_t *tree_root) {
 unsigned int set_bit(unsigned char current_byte, int position) {
 	unsigned char mask = (1 << position);
 	return (mask | current_byte);
+}
+
+/* retorna um elemento de uma hash table */
+bit_char_t get_of_hash_table (hash_table_t *hash_table, int key) {
+	int hash = hash_function(key, ASCII_MAX_PRIME);
+	bit_char_t bit_char;
+	bit_char.size = ZERO;
+	bit_char.b_char = (unsigned int)ZERO;
+	element_t *current_element = hash_table->table[hash];
+	if (current_element != NULL) {
+		while (current_element != NULL && current_element->key != key) {
+			current_element = current_element->next_element;
+		}
+		return (current_element->value);
+	}
+	return (bit_char);
 }
