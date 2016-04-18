@@ -110,6 +110,16 @@ unsigned int write_compressed(FILE *, FILE *, hash_table_t *);
 /* escreve o tamanho do lixo no primeiro byte do arquivo */
 void write_trash_size(FILE *, unsigned int);
 
+/* retorna TRUE se o nó recebido for uma folha e FALSE caso contrário */
+bool is_leaf(node_t *);
+
+
+/* retorna TRUE se o nó recebido for uma folha e FALSE caso contrário */
+bool is_leaf(node_t *binary_tree) {
+	return ((binary_tree != NULL) && (binary_tree->left == NULL) 
+			 && (binary_tree->right == NULL));
+}
+
 /* escreve o tamanho do lixo no primeiro byte do arquivo */
 void write_trash_size(FILE *output_file, unsigned int trash_size) {
 	char first_byte;
@@ -131,18 +141,12 @@ unsigned int write_compressed(FILE *input_file, FILE *output_file,
 		int trash_size = ZERO; /* tamanho do lixo, que será retornado */
 		int writing_index = BYTE_SIZE; 
 		int bits_to_next_char = ZERO;
-		/* servirá para sinalizar que o * foi encontrado no aquivo */
-		bool escape_flag = FALSE; 
 		unsigned int writing_char = (unsigned int)ZERO;
 		bit_char_t current_bit_char;
 		/* volta ao início do arquivo para lê-lo por completo */
 		fseek(input_file, ZERO, ZERO);
 		char current_char = getc(input_file);
 		while (current_char != EOF) {
-			if (escape_flag == FALSE && current_char == '*') {
-				current_char = '\\';
-				escape_flag = TRUE;
-			}
 			current_bit_char = get_of_hash_table(chars_table, current_char);
 			/* se o caracter codificado não couber por completo no byte cor-
 			 * rente, escreve até onde der, grava no arquivo, e escreve o que
@@ -175,16 +179,7 @@ unsigned int write_compressed(FILE *input_file, FILE *output_file,
 						   (writing_index - current_bit_char.size));
 				writing_index -= current_bit_char.size;
 			}
-			if (escape_flag == TRUE && current_char == '*') {
-				escape_flag = FALSE;
-				current_char = getc(input_file);
-			}
-			else if (escape_flag == TRUE && current_char == '\\') {
-				current_char = '*';
-			}
-			else if (escape_flag == FALSE) {
-				current_char = getc(input_file);
-			}
+			current_char = getc(input_file);
 		}
 		/* verifica se o byte corrente está vazio e, caso não esteja, grava-o
 		 * no arquivo e salva o novo tamanho do lixo */
@@ -228,7 +223,7 @@ int bits_quantity(node_t *binary_tree, char character) {
 	if (binary_tree != NULL) {
 
 		/* retorna ZERO se o caracter for o próprio da árvore */
-		if (binary_tree->character == character) {
+		if (binary_tree->character == character && is_leaf(binary_tree)) {
 			return (ZERO);
 		}
 		if (binary_tree->left != NULL) {
@@ -275,20 +270,16 @@ unsigned int make_bit_char(node_t *huff_tree, char character) {
 	
 	if (huff_tree != NULL) {
 
-		/* se for o primeiro caracter da árvore, retorna da forma que está */
-		if (huff_tree->character == character) {
-			return (bit_char);
-		}
-
 		/* navega pela huff tree em busca do caracter e, a cada nível, seta
 		 * ou não o último bit, enquanto arrasta os bits anteriores para a
 		 * esquerda */
 		while(current_node != NULL
-				&& current_node->character != character) {
+				&& current_node->character != character
+				&& !is_leaf(current_node)) {
 			/* se o caracter estiver à direita na árvore, seta o último bit e
 			 * anda para a direitra */
 			if (is_on_tree(current_node->right, character)) {
-				bit_char = set_bit(bit_char, 0);
+				bit_char = set_bit(bit_char, ZERO);
 				current_node = current_node->right;
 			}
 			/* se não estiver à direita, apenas anda para a esquerda */
