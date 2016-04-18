@@ -49,7 +49,7 @@ int main (int args_count, char *args[]) {
 
 	/* caracter que será escrito com os caracteres codificados antes de passar
 	 * para o arquivo */
-	unsigned int writing_char;
+	unsigned int trash_size;
 
 	/* caso nenhum argumento tenha sido informado, não é possível continuar o
 	 * programa */
@@ -179,6 +179,11 @@ int main (int args_count, char *args[]) {
 		 * respondente no array de quantidades */
 		current_char = getc(input_file);
 		while (current_char != EOF) {
+			/* se o caracter * for encontrado, o \ (escape) também é contabi-
+			 * lizado */
+			if (current_char == '*') {
+				ascii['\\']++;	
+			}
 			ascii[current_char]++;
 			current_char = getc(input_file);
 		}
@@ -188,17 +193,7 @@ int main (int args_count, char *args[]) {
 		 * prioridades que se transformará na árvore de huffman */
 		for (i = ZERO; i < ASCII_MAX; i++) {
 			if (ascii[i] != ZERO) {
-				if (i != '*') {
-					tree = enqueue(tree, ascii[i], (char)i);
-				}
-				else {
-					/* uma atenção especial é dada quando o caractere * é en-
-					 * contrado, pois este será o caracter usado na árvore de
-					 * huffman. dois caracteres são enfileirados: o \ (escape)
-					 * e logo após, o * em si. */
-					tree = enqueue(tree, ascii[i], (char)'\\');
-					tree = enqueue(tree, ascii[i], (char)'*');
-				}
+				tree = enqueue(tree, ascii[i], (char)i);
 			}
 		}
 
@@ -206,6 +201,8 @@ int main (int args_count, char *args[]) {
 		 * o nó raíz */
 		tree_root = huffmanrize_queue(tree);
 
+		/* cria a hash table para a arvore de huffman, com os valores de cada
+		 * caracter */
 		chars_table = make_huff_table(tree_root, ascii);
 
 		/* imprime o cabeçalho do arquivo HUFFMAN, exceto o tamanho do lixo
@@ -217,56 +214,11 @@ int main (int args_count, char *args[]) {
 			return (ERROR);
 		}
 
-		/* comprimir arquivo */
+		/* escrever o arquivo comprimido e recebe o tamanho do lixo */
+		trash_size = write_compressed(input_file, output_file, chars_table);
 
-
-		/* renova o arquivo input_file, visto que ele foi consumido ao ler por
-		 * por completo para contar os caracteres e formar a árvore */
-		input_file = fopen(input_file_name, "r");
-
-		unsigned int trash_size = (unsigned int)ZERO;
-		int writing_index = 8;
-		writing_char = (unsigned int)ZERO;
-		int bits_to_next_char = ZERO;
-		current_char = getc(input_file);
-		while (current_char != EOF) {
-			current_bit_char = get_of_hash_table(chars_table, current_char);
-			if ((writing_index - current_bit_char.size) < ZERO) {
-				bits_to_next_char = ((writing_index
-										- current_bit_char.size) * (-1));
-				writing_char = writing_char | (current_bit_char.b_char >>
-						   bits_to_next_char);
-				fprintf(output_file, "%c", writing_char);
-				writing_char = (unsigned int)ZERO;
-				writing_index = 8;
-				writing_char = (current_bit_char.b_char <<
-									(writing_index - bits_to_next_char));
-				writing_index -= bits_to_next_char;
-				bits_to_next_char = ZERO;
-			}
-			else if ((writing_index - current_bit_char.size) == ZERO) {
-				writing_char = (writing_char | current_bit_char.b_char);
-				fprintf(output_file, "%c", writing_char);
-				writing_index = 8;
-				writing_char = (unsigned int)ZERO;
-			}
-			else {
-				writing_char = writing_char | (current_bit_char.b_char <<
-						   (writing_index - current_bit_char.size));
-				writing_index -= current_bit_char.size;
-			}
-			current_char = getc(input_file);
-		}
-		if (writing_index != 8){
-			fprintf(output_file, "%c", writing_char);
-			trash_size = (unsigned int)writing_index;
-			fseek(output_file, ZERO, ZERO);
-			current_char = getc(output_file);
-			writing_char = (unsigned int)ZERO;
-			writing_char = (current_char | (trash_size << 5));
-			fseek(output_file, ZERO, ZERO);
-			fprintf(output_file, "%c", writing_char);
-		}
+		/* escreve o tamanho do lixo nos 3 primeiros bits do arquivo */
+		write_trash_size(output_file, trash_size);
 
 
 	}
