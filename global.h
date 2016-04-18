@@ -24,3 +24,6 @@ typedef int bool;
 
 /* número de elementos na tabela ascii */
 #define ASCII_MAX 256
+
+/* tamanho de um byte */
+#define BYTE_SIZE 8
