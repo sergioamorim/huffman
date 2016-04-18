@@ -103,6 +103,97 @@ unsigned int make_bit_char(node_t *, char);
 /* retorna TRUE se um caracter pertence a uma árvore */
 bool is_on_tree(node_t *, char);
 
+/* escreve no arquivo de saída, usando a codificação pela árvore de huffman,
+ * os bytes do arquivo de entrada e retorna o tamanho do lixo */
+unsigned int write_compressed(FILE *, FILE *, hash_table_t *);
+
+/* escreve o tamanho do lixo no primeiro byte do arquivo */
+void write_trash_size(FILE *, unsigned int);
+
+/* escreve o tamanho do lixo no primeiro byte do arquivo */
+void write_trash_size(FILE *output_file, unsigned int trash_size) {
+	char first_byte;
+	unsigned int writing_char;
+	fseek(output_file, ZERO, ZERO); /* volta ao início do arquivo */
+	first_byte = getc(output_file); /* recebe o primeiro byte do arquivo */
+	writing_char = (unsigned int)ZERO; /* inicializa o byte que será escrito*/
+	writing_char = (first_byte | (trash_size << 
+					(BYTE_SIZE - TRASH_BITS_QUANTITY)));
+	fseek(output_file, ZERO, ZERO); /* volta ao início do arquivo */
+	fprintf(output_file, "%c", writing_char); /* escreve o byte */
+}
+
+/* escreve no arquivo de saída, usando a codificação pela árvore de huffman,
+ * os bytes do arquivo de entrada e retorna o tamanho do lixo */
+unsigned int write_compressed(FILE *input_file, FILE *output_file, 
+								hash_table_t *chars_table) {
+
+		int trash_size = ZERO; /* tamanho do lixo, que será retornado */
+		int writing_index = BYTE_SIZE; 
+		int bits_to_next_char = ZERO;
+		/* servirá para sinalizar que o * foi encontrado no aquivo */
+		bool escape_flag = FALSE; 
+		unsigned int writing_char = (unsigned int)ZERO;
+		bit_char_t current_bit_char;
+		/* volta ao início do arquivo para lê-lo por completo */
+		fseek(input_file, ZERO, ZERO);
+		char current_char = getc(input_file);
+		while (current_char != EOF) {
+			if (escape_flag == FALSE && current_char == '*') {
+				current_char = '\\';
+				escape_flag = TRUE;
+			}
+			current_bit_char = get_of_hash_table(chars_table, current_char);
+			/* se o caracter codificado não couber por completo no byte cor-
+			 * rente, escreve até onde der, grava no arquivo, e escreve o que
+			 * faltou no próximo byte */
+			if ((writing_index - current_bit_char.size) < ZERO) {
+				bits_to_next_char = ((writing_index
+										- current_bit_char.size) * (-1));
+				writing_char = writing_char | (current_bit_char.b_char >>
+						   bits_to_next_char);
+				fprintf(output_file, "%c", writing_char);
+				writing_char = (unsigned int)ZERO;
+				writing_index = BYTE_SIZE;
+				writing_char = (current_bit_char.b_char <<
+									(writing_index - bits_to_next_char));
+				writing_index -= bits_to_next_char;
+			}
+			/* se o caracter codificado ocupar exatamente o que falta para
+			 * completar o byte corrente, escreve-o, grava o byte corrente no
+			 * arquivo e renova o byte de escrita */
+			else if ((writing_index - current_bit_char.size) == ZERO) {
+				writing_char = (writing_char | current_bit_char.b_char);
+				fprintf(output_file, "%c", writing_char);
+				writing_index = BYTE_SIZE;
+				writing_char = (unsigned int)ZERO;
+			}
+			/* se ainda sobrar espaço no byte corrente depois de escrever o
+			 * caracter codificado, apenas faz isso */
+			else {
+				writing_char = writing_char | (current_bit_char.b_char <<
+						   (writing_index - current_bit_char.size));
+				writing_index -= current_bit_char.size;
+			}
+			if (escape_flag == TRUE && current_char == '*') {
+				escape_flag = FALSE;
+				current_char = getc(input_file);
+			}
+			else if (escape_flag == TRUE && current_char == '\\') {
+				current_char = '*';
+			}
+			else if (escape_flag == FALSE) {
+				current_char = getc(input_file);
+			}
+		}
+		/* verifica se o byte corrente está vazio e, caso não esteja, grava-o
+		 * no arquivo e salva o novo tamanho do lixo */
+		if (writing_index != BYTE_SIZE){
+			fprintf(output_file, "%c", writing_char);
+			trash_size = writing_index;
+		}
+		return (trash_size); /* retorna o tamanho do lixo */
+}
 
 /* cria uma hash table com os nós de uma huff tree */
 hash_table_t *make_huff_table(node_t *huff_tree, int *ascii) {
@@ -117,6 +208,9 @@ hash_table_t *make_huff_table(node_t *huff_tree, int *ascii) {
 	for (i = ZERO; i < ASCII_MAX; i++) {
 		if (ascii[i] != ZERO) {
 			size = bits_quantity(huff_tree, i);
+			/* se o tamanho retornado for ZERO, então o caracter está na raíz
+			 * da árvore huff, seu tamanho sera 1 bit e seu valor será ZERO,
+			 * anyway */
 			if (size == ZERO) {
 				size = 1;
 			}
