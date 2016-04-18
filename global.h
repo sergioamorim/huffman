@@ -27,3 +27,6 @@ typedef int bool;
 
 /* tamanho de um byte */
 #define BYTE_SIZE 8
+
+/* quantidade de bits para o lixo */
+#define TRASH_BITS_QUANTITY 3
