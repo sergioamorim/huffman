@@ -179,11 +179,6 @@ int main (int args_count, char *args[]) {
 		 * respondente no array de quantidades */
 		current_char = getc(input_file);
 		while (current_char != EOF) {
-			/* se o caracter * for encontrado, o \ (escape) também é contabi-
-			 * lizado */
-			if (current_char == '*') {
-				ascii['\\']++;	
-			}
 			ascii[current_char]++;
 			current_char = getc(input_file);
 		}
