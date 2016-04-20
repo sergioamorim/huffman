@@ -1,5 +1,13 @@
 /* Este programa comprime ou extrai arquivos usando a Codificação de Huffman.
- * Ese é o arquivo principal do projeto, que deve ser compilado.
+ * Na compressão, o arquivo de saída terá nos 3 primeiros bits o número cor-
+ * respondente à quantidade de bits de lixo no final do arquivo. Nos 3 bits
+ * seguintes haverá o número correspondente à quantidade de bytes ocupada pe-
+ * la árvore de Huffman. A árvore de Huffman será escrita após os dois primei-
+ * ros bytes em pré-ordem, em codificação ASCII. Após a árvore de Huffman, ha-
+ * verá os bits com os dados do arquivo comprimido usando a árvore impressa
+ * como codificação. Na descompressão, as regras descritas anteriormente devem
+ * ter sido usadas para comprimir o arquivo de entrada.
+ * Este é o arquivo principal do projeto, que deve ser compilado.
  *
  * uso: ./main.out [-h] [-c] [-x] -i INPUT_FILE [-o OUTPUT_FILE]
  *
@@ -7,7 +15,7 @@
  *
  * -h 		exibe esta mensagem de ajuda e encerra o programa
  * -c 		comprimir o arquivo de entrada
- * -x		extrair o arquivo de entrada
+ * -x		descomprimir o arquivo de entrada
  * -i INPUT_FILE
  *		arquivo de entrada do programa
  * -o OUTPUT_FILE

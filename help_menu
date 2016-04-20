@@ -1,12 +1,20 @@
  [-h] [-c] [-x] -i INPUT_FILE [-o OUTPUT_FILE]
 
-Comprime ou extrai arquivos usando a Codificação de Huffman.
+Comprime ou extrai arquivos usando a Codificação de Huffman. Na compressão, o
+arquivo de saída terá nos 3 primeiros bits o número correspondente à quantida-
+de de bits de lixo no final do arquivo. Nos 13 bits seguintes haverá o número
+correspondente à quantidade de bytes ocupada pela árvore de Huffman. A árvore
+de Huffman será escrita após os dois primeiros bytes em pré-ordem, em codifi-
+cação ASCII. Após a árvore de Huffman, haverá os bits com os dados do arquivo
+comprimido usando a árvore impressa como codificação. Na descompressão, as re-
+gras descritas anteriormente devem ter sido usadas para comprimir o arquivo de
+entrada.
 
 argumentos:
 
   -h 		exibe esta mensagem de ajuda e encerra o programa
   -c 		comprimir o arquivo de entrada
-  -x		extrair o arquivo de entrada
+  -x		descomprimir o arquivo de entrada
   -i INPUT_FILE
 		arquivo de entrada do programa
   -o OUTPUT_FILE
