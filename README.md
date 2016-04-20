@@ -34,7 +34,7 @@ Este programa comprime ou extrai arquivos usando a Codificação de Huffman. Na 
 
 **-o**: caminho para o arquivo de saída (opcional; padrão: nome do arquivo de entrada)
 
-É necessário informar o caminho para o arquivo de entrada e se o arquivo deve ser comprimido ou descomprimido.
+É necessário informar o caminho para o arquivo de entrada e se ele deve ser comprimido ou descomprimido.
 
 
 
