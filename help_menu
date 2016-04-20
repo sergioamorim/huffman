@@ -10,5 +10,5 @@ argumentos:
   -i INPUT_FILE
 		arquivo de entrada do programa
   -o OUTPUT_FILE
-		arquivo de saída do programa sem extensão (padrão: nome do arquivo de
-		entrada)
+		arquivo de saída do programa sem extensão (padrão: nome do ar-
+		quivo de entrada)
