@@ -56,8 +56,8 @@ Este programa comprime ou extrai arquivos usando a Codificação de Huffman. Na 
 
 
 
-#####Observações:
+####Observações:
 
 As recomendações de estilo na escrita do código descritas neste documento foram seguidas a medida que não fugiam do escorpo do projeto: Recommended C Style and Coding Standards (Cannon) [https://www.doc.ic.ac.uk/lab/cplus/cstyle.html]
 
-Testado usando o GCC 5.2.1 GNU/Linux 
+Testado usando o GCC 5.2.1 GNU/Linux
