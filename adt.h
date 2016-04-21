@@ -113,6 +113,23 @@ void write_trash_size(FILE *, unsigned int);
 /* retorna TRUE se o nó recebido for uma folha e FALSE caso contrário */
 bool is_leaf(node_t *);
 
+/* retorna a quantidade de bits de lixo que está escrita no primeiro byte do
+ * arquivo recebido, nos 3 primeiros bits */
+int get_trash_size(FILE *);
+
+/* retorna a quantidade de bits de lixo que está escrita no primeiro byte do
+ * arquivo recebido, nos 3 primeiros bits */
+int get_trash_size(FILE *input_file) {
+	int trash_size;
+	char first_byte;
+	fseek(input_file, ZERO, ZERO); /* volta ao início do arquivo */
+	first_byte = getc(input_file); /* recebe o primeiro byte do arquivo */
+	
+	trash_size = (first_byte << (BYTE_SIZE - TRASH_BITS_QUANTITY));
+
+	return (trash_size); /* retorna o valor que estava escrito */
+}
+
 
 /* retorna TRUE se o nó recebido for uma folha e FALSE caso contrário */
 bool is_leaf(node_t *binary_tree) {
