@@ -117,6 +117,28 @@ bool is_leaf(node_t *);
  * arquivo recebido, nos 3 primeiros bits */
 int get_trash_size(FILE *);
 
+/* retorna o tamanho da árvore que está escrito nos 13 bits seguintes ao ta-
+ * manho do lixo */
+int get_tree_size(FILE *);
+
+
+/* retorna o tamanho da árvore que está escrito nos 13 bits seguintes ao ta-
+ * manho do lixo */
+int get_tree_size(FILE *) {
+	int tree_size;
+	char first_byte, second_byte;
+	fseek(input_file, ZERO, ZERO); /* volta ao início do arquivo */
+
+	/* recebe os dois primeiros bytes do arquivo */
+	first_byte = getc(input_file); 
+	second_byte = getc(input_file);
+
+	trash_size = ((first_byte << TRASH_BITS_QUANTITY) << BYTE_SIZE)
+					| second_byte;
+
+	return (trash_size); /* retorna o valor que estava escrito */
+}
+
 /* retorna a quantidade de bits de lixo que está escrita no primeiro byte do
  * arquivo recebido, nos 3 primeiros bits */
 int get_trash_size(FILE *input_file) {
@@ -125,11 +147,10 @@ int get_trash_size(FILE *input_file) {
 	fseek(input_file, ZERO, ZERO); /* volta ao início do arquivo */
 	first_byte = getc(input_file); /* recebe o primeiro byte do arquivo */
 	
-	trash_size = (first_byte << (BYTE_SIZE - TRASH_BITS_QUANTITY));
+	trash_size = (first_byte >> (BYTE_SIZE - TRASH_BITS_QUANTITY));
 
 	return (trash_size); /* retorna o valor que estava escrito */
 }
-
 
 /* retorna TRUE se o nó recebido for uma folha e FALSE caso contrário */
 bool is_leaf(node_t *binary_tree) {
