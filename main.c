@@ -144,7 +144,7 @@ int main (int args_count, char *args[]) {
 	/* caso não seja possível abrir o arquivo de entrada, uma mensagem de erro
 	 * é exibida e o programa é encerrado */
 	if (input_file == NULL) {
-		fprintf(stderr, "ERRO: não foi possível ler o arquivo");
+		fprintf(stderr, "ERRO: não foi possível ler o arquivo ");
 		fprintf(stderr, "%s\n", input_file_name);
 		print_help(args[ZERO], project_path); /* as instruções são exibidas */
 		return (ERROR); /* o programa é encerrado */
@@ -156,7 +156,7 @@ int main (int args_count, char *args[]) {
 	/* caso não seja possível abrir o arquivo de saída, uma mensagem de erro é
 	 * exibida e o programa é encerrado */
 	if (output_file == NULL) {
-		fprintf(stderr, "ERRO: não foi possível escrever no arquivo");
+		fprintf(stderr, "ERRO: não foi possível escrever no arquivo ");
 		fprintf(stderr, "%s\n", output_file_name);
 		print_help(args[ZERO], project_path); /* as instruções são exibidas */
 		return (ERROR); /* o programa é encerrado */
@@ -168,22 +168,22 @@ int main (int args_count, char *args[]) {
 
 		/* guardará a quantidade de vezes que cada caracter ascii aparece no
 		 * arquivo */
-		int ascii[ASCII_MAX];
+		unsigned int ascii[ASCII_MAX];
 
 		queue_t *tree; /* fila de prioridade que se tornará a árvore de huff*/
 		node_t *tree_root; /* guardará o nó raíz da árvore de huffman */
 	
 		tree = create_queue(); /* inicia a fila, vazia */
 
-		int i;
+		unsigned int i;
 		/* inicia todas as posições do array de quantidades com ZERO */
 		for (i = ZERO; i < ASCII_MAX; i++) {
 			ascii[i] = ZERO;
 		}
 
-		char current_char; /* guardará cada caracter obtido temporariamente */
+		unsigned int current_char; /* guardará cada caracter obtido temporariamente */
 
-		/* recebe caracter por caracter do arquivo e incrementa a posição cor-
+		/* recebe caracter por c aracter do arquivo e incrementa a posição cor-
 		 * respondente no array de quantidades */
 		current_char = getc(input_file);
 		while (current_char != EOF) {
@@ -196,7 +196,7 @@ int main (int args_count, char *args[]) {
 		 * prioridades que se transformará na árvore de huffman */
 		for (i = ZERO; i < ASCII_MAX; i++) {
 			if (ascii[i] != ZERO) {
-				tree = enqueue(tree, ascii[i], (char)i);
+				tree = enqueue(tree, ascii[i], (unsigned int)i);
 			}
 		}
 
@@ -223,7 +223,6 @@ int main (int args_count, char *args[]) {
 		/* escreve o tamanho do lixo nos 3 primeiros bits do arquivo */
 		write_trash_size(output_file, trash_size);
 
-
 	}
 	/* caso o argumento para compressão não seja passado, então o de extração
 	 * foi, pois a foi feita a verificação que apenas um dos dois deveria ser 
@@ -231,8 +230,16 @@ int main (int args_count, char *args[]) {
 	 * arquivo de entrada servirá para ser descomprimido em um arquivo de saí-
 	 * da */
 	else {
-		printf("x\n");
 		/* extrair arquivo */
+
+		trash_size = get_trash_size(input_file);
+
+		unsigned int tree_size = get_tree_size(input_file);
+
+		node_t *huff_tree = get_tree(input_file, tree_size);
+
+		decompress(input_file, trash_size, tree_size, huff_tree, output_file);
+
 	}
 
 	/* fecha os arquivos abertos */
