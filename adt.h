@@ -385,82 +385,59 @@ node_t *get_tree(FILE *input_file, unsigned int tree_size) {
 		tree_array[i] = getc(input_file);
 	}
 	i = ZERO;
-	current_char = tree_array[i];
-	if (tree_array[i] == '\\' && tree_array[(i + 1)] == '*') {
-		i++;
+	current_char = tree_array[i++];
+	if ((tree_array[i] == '*') && (current_char == '\\')) {
 		escape_sequence = TRUE;
-		current_char = tree_array[i];
+		current_char = tree_array[i++];
 	}
-	i++;
 	root = create_node(current_char);
 	tree_stack = push_to_stack(tree_stack, root);
-	
-
 	while (i < tree_size) {
 		current_node = peek_from_stack(tree_stack);
-		current_char = tree_array[i];
-		if (tree_array[i] == '\\' && tree_array[(i + 1)] == '*') {
-			i++;
+		current_char = tree_array[i++];
+		if ((tree_array[i] == '*') && (current_char == '\\')) {
 			escape_sequence = TRUE;
-			current_char = tree_array[i];
+			
+			current_char = tree_array[i++];
+		
 		}
-		i++;
-		if (current_char != '*' || escape_sequence == TRUE) {
-			current_node = peek_from_stack(tree_stack);
+		if ((current_char != '*') || (escape_sequence == TRUE)) {
 			current_node = insert_left(current_node, current_char);
 			if (i < tree_size) {
-				current_char = tree_array[i];
-				if (tree_array[i] == '\\' && tree_array[(i + 1)] == '*') {
-					i++;
+				current_char = tree_array[i++];
+				if ((tree_array[i] == '*') && (current_char == '\\')) {
 					escape_sequence = TRUE;
-					current_char = tree_array[i];
+					current_char = tree_array[i++];
 				}
-				i++;
-				current_node = peek_from_stack(tree_stack);
 				current_node = insert_right(current_node, current_char);
-				if (current_char == '*' && escape_sequence == FALSE) {
+				if ((current_char == '*') && (escape_sequence == FALSE)) {
 					tree_stack = push_to_stack(tree_stack, current_node->right);
 				}
 				else if (i < tree_size) {
 					while (((current_char != '*') && (i < tree_size)) || ((escape_sequence == TRUE) && (i < tree_size))) {
-						current_node = peek_from_stack(tree_stack);
 						while (current_node->right != NULL) {
-							if (peek_from_stack(tree_stack) != root) {
-								current_node = pop_from_stack(tree_stack);
-							}
-							else {
-								current_node = peek_from_stack(tree_stack);
-								break;
-							}
+							pop_from_stack(tree_stack);
+							current_node = peek_from_stack(tree_stack);
 						}
-						current_char = tree_array[i];
-						if (tree_array[i] == '\\' && tree_array[(i + 1)] == '*') {
-							i++;
+						current_char = tree_array[i++];
+						if ((tree_array[i] == '*') && (current_char == '\\')) {
 							escape_sequence = TRUE;
-							current_char = tree_array[i];
+							current_char = tree_array[i++];
 						}
-						i++;
-						current_node = peek_from_stack(tree_stack);
 						current_node = insert_right(current_node, current_char);
-						if (current_char == '*' && escape_sequence == FALSE) {
+						escape_sequence = FALSE;
+						if ((current_char == '*') && (escape_sequence == FALSE)) {
 							tree_stack = push_to_stack(tree_stack, current_node->right);
 						}
 						escape_sequence = FALSE;
 					}
-					escape_sequence = FALSE;
 				}
-				escape_sequence = FALSE;
 			}
-			escape_sequence = FALSE;
 		}
 		else {
-			current_node = peek_from_stack(tree_stack);
 			current_node = insert_left(current_node, current_char);
 			tree_stack = push_to_stack(tree_stack, current_node->left);
 		}
-		escape_sequence = FALSE;
-
-
 	}
 	return (root);
 }
