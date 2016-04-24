@@ -16,7 +16,7 @@ typedef struct node_t__ {
 	struct node_t__ *right; /* filho à esquerda do nó */
 } node_t;
 
-/* estrutura de uma fila */
+/* estrutura de uma fila de nós de árvore binária */
 typedef struct queue_t__ {
     node_t *first; /* primeiro nó da fila */
     int size; /* tamanho da fila */
@@ -40,17 +40,6 @@ typedef struct hash_table_t__ {
 	element_t *table[ASCII_MAX_PRIME];
 } hash_table_t;
 
-typedef struct stack_element_t__ {
-	node_t *binary_tree;
-	struct stack_element_t__ *next_element;
-} stack_element_t;
-
-/* estrutura de uma pilha de árvores */
-typedef struct stack_t__ {
-    stack_element_t *top;
-} stack_t;
-
-
 /* cria uma hash table vazia e a retorna */
 hash_table_t *create_hash_table(int);
 
@@ -72,6 +61,9 @@ queue_t *create_queue();
 /* enfileira um caracter e a quantidade de vezes que ele aparece à fila rece-
  * bida e retorna a própia fila */
 queue_t *enqueue(queue_t *, unsigned int, unsigned int);
+
+/* enfileira um elemento à fila recebida e retorna a própia fila */
+queue_t *enqueue_node(queue_t *, node_t *);
 
 /* desenfileira o elemento de maior prioridade de uma fila e o retorna */
 node_t *dequeue(queue_t *);
@@ -109,6 +101,15 @@ unsigned int set_bit(unsigned int, int);
 /* retorna a quantidade de bits de um caracter codificado */
 int bits_quantity(node_t *, unsigned int);
 
+/* cria uma hash table vazia com a quantidade de endereços recebida e a retor-
+ * na */
+hash_table_t* create_hash_table(int);
+
+/* insere um elemento em uma hash table */
+void insert_on_hash_table(hash_table_t *hash_table, unsigned int key,
+							int size, unsigned int b_char,
+							int addresses_quantity);
+
 /* retorna um caracter codificado de acordo com uma huff tree */
 unsigned int make_bit_char(node_t *, unsigned int);
 
@@ -133,36 +134,20 @@ unsigned int get_trash_size(FILE *);
  * manho do lixo */
 unsigned int get_tree_size(FILE *);
 
+/* retorna um array com os bytes da árvore escrita no arquivo, após os dois
+ * primeiros bytes, de acordo com o tamanho da árvore recebido */
+unsigned int *get_tree_array(FILE *, unsigned int);
+
 /* retorna a árvore escrita em pré-ordem nos tree_size bytes após o segundo
  * byte no arquivo recebido */
 node_t *get_tree(FILE *, unsigned int);
 
-/* cria uma pilha vazia e a retorna */
-stack_t *create_stack();
-
-/* adiciona uma árvore na pilha */
-stack_t *push_to_stack(stack_t *, node_t *);
-
-/* remove uma árvore da pilha e a retorna */
-node_t *pop_from_stack(stack_t *);
-
-/* retorna uma cópia da árvore do topo da pilha, sem remover 
- * se a pilha estiver vazia, retorna NULL */
-node_t *peek_from_stack(stack_t *);
-
-/* retorna TRUE caso a pilha esteja vazia e FALSE caso não esteja */
-bool is_empty_stack(stack_t *);
+/* cria uma árvore que é recebida escrita em pré-ordem em um array e a retor-
+ * na */
+node_t *make_tree(unsigned int **)
 
 /* cria um nó de uma árvore com um caracter e sem filhos */
-node_t *create_node(unsigned int);
-
-/* cria um novo nó com o caracter recebido e o insere à esquerda do nó recebi-
- * do, retorna o próprio nó recebido */
-node_t *insert_left(node_t *, unsigned int);
-
-/* cria um novo nó com o caracter recebido e o insere à direita do nó recebi-
- * do, retorna o próprio nó recebido */
-node_t *insert_right(node_t *, unsigned int);
+node_t *create_node(unsigned int, node_t *, node_t *);
 
 /* lê byte a byte do arquivo após a árvore e escreve os caracteres correspon-
  * dentes de acordo com a árvore de huffman recebida */
@@ -172,18 +157,27 @@ void decompress(FILE *, unsigned int, int, node_t *, FILE *);
  * caso contrário */
 bool is_bit_set(unsigned int, int);
 
+/* verifica se há o caracter de controle * em uma árvore como folha e, se sim,
+ * retorna a quantidade de vezes que isso acontece */
 unsigned int get_escape_sequences(node_t *);
 
+/* verifica se há o caracter de controle * em uma árvore como folha e, se sim,
+ * retorna a quantidade de vezes que isso acontece */
 unsigned int get_escape_sequences(node_t *node_tree) {
 	unsigned int escapes_sequences = ZERO;
 	if (node_tree != NULL) {
-		if (node_tree->character == '*' && is_leaf(node_tree)){
+		/* se o caracter * for encontrado em um nó e esse nó for uma folha, a
+		 * variável de retorno é incrementada */
+		if (((node_tree->character == '*') || (node_tree->character == '\\'))
+			&& is_leaf(node_tree)){
 			escapes_sequences += 1;
 		}
+		/* verifica à esquerda e à direita do nó e soma o resultado à variável
+		 * de retorno */
 		escapes_sequences += get_escape_sequences(node_tree->left);
 		escapes_sequences += get_escape_sequences(node_tree->right);
 	}
-	return (escapes_sequences);
+	return (escapes_sequences); /* retorna o valor obtido */
 }
 
 
@@ -198,74 +192,66 @@ bool is_bit_set(unsigned int character, int position) {
  * dentes de acordo com a árvore de huffman recebida */
 void decompress(FILE *input_file, unsigned int trash_size, int tree_size, 
 				node_t *huff_tree, FILE *output_file) {
-
+	/* se a árvore é de tamanho ZERO, não há o que ser feito, então a função é
+	 * interrompida */
 	if (tree_size == ZERO) {
 		return;
 	}
 
 	node_t *current_node = huff_tree;
 
-	unsigned int current_byte;
-	unsigned int character;
-	unsigned int last_byte;
-	int bytes_total;
-	int bytes;
-	int i;
+	unsigned int current_byte; /* byte corrente no arquivo de entrada */
+	unsigned int character; /* character da sequencia de bits encontrada */
+	unsigned int last_byte; /* último byte do arquivo, antes de EOF */
+	int bytes_total; /* total de bytes no arquivo */
+	int bytes; /* índice de bytes do arquivo */
+	int i; /* índice para laço */
 
+	/* vai até o fim do arquivo e recebe o penúltimo byte (o último será EOF)
+	 * e depois recebe o número do byte atual do arquivo (EOF), que será a
+	 * quantidade de bytes total do arquivo */
 	fseek(input_file, -1, SEEK_END);
 	last_byte = getc(input_file);
 	bytes_total = ftell(input_file);
 
+	/* volta para o início do arquivo, logo após a árvore que está escrita */
 	fseek(input_file, (2+tree_size), ZERO);
+
+	/* para cada byte lido, verifica bit a bit se está setado e, se estiver
+	 * anda uma vez para a direita na árvore de huffman, se não, anda uma vez
+	 * para a esquerda na árvore de huffman até que se encontre um nó folha da
+	 * árvore. quando um nó folha é encontrado, o caracter do nó é escrito no
+	 * arquivo de saída e a leitura do restante do byte é continuada, até que
+	 * se chegue ao antepenúltimo byte do arquivo (o penúltimo será escrito
+	 * depois, respeitando o tamanho do lixo, e o último é EOF e não deve ser
+	 * escrito) */
 	current_byte = getc(input_file);
 	for (bytes = (2+tree_size); bytes < (bytes_total - 1); bytes++) {
 		for (i = (BYTE_SIZE - 1); i >= ZERO; i--) {
+			/* se o bit estiver setado, anda para a direita na árvore */
 			if (is_bit_set(current_byte, i) != FALSE) {
 				if (current_node->right != NULL)
 					current_node = current_node->right;
 			}
+			/* se o bit não estiver setado, anda para a esquerda na árvore */
 			else {
 				if (current_node->left != NULL)
 					current_node = current_node->left;
 			}
+			/* se uma folha for encontrada na árvore, escreve o caracter dela
+			 * no arquivo de saída */
 			if (is_leaf(current_node) != FALSE) {
 				fprintf(output_file, "%c", current_node->character);
 				current_node = huff_tree;
 			}
 		}
+		/* recebe o próximo byte */
 		current_byte = getc(input_file);
 	}
-	if (trash_size != ZERO) {
-		for (i = (BYTE_SIZE-1); i >= trash_size; i--) {
-			if (is_bit_set(current_byte, i) != FALSE) {
-				if (current_node->right != NULL)
-					current_node = current_node->right;
-			}
-			else {
-				if (current_node->left != NULL)
-					current_node = current_node->left;
-			}
-			if (is_leaf(current_node) != FALSE) {
-				fprintf(output_file, "%c", current_node->character);
-				current_node = huff_tree;
-			}
-		}
-	}
-	else {
-		for (i = (BYTE_SIZE-1); i > trash_size; i--) {
-			if (is_bit_set(current_byte, i) != FALSE) {
-				if (current_node->right != NULL)
-					current_node = current_node->right;
-			}
-			else {
-				if (current_node->left != NULL)
-					current_node = current_node->left;
-			}
-			if (is_leaf(current_node) != FALSE) {
-				fprintf(output_file, "%c", current_node->character);
-				current_node = huff_tree;
-			}
-		}
+
+	/* os últimos bits serão recebitos somente até o tamanho do lixo, no últi-
+	 * mo byte do arquivo */
+	for (i = (BYTE_SIZE-1); i >= (signed int)trash_size; i--) {
 		if (is_bit_set(current_byte, i) != FALSE) {
 			if (current_node->right != NULL)
 				current_node = current_node->right;
@@ -279,167 +265,80 @@ void decompress(FILE *input_file, unsigned int trash_size, int tree_size,
 			current_node = huff_tree;
 		}
 	}
-
+	
 }
 
 
-/* cria um novo nó com o caracter recebido e o insere à esquerda do nó recebi-
- * do, retorna o próprio nó recebido */
-node_t *insert_left(node_t *binary_tree, unsigned int character) {
-	node_t *new_node = create_node(character);
-	binary_tree->left = new_node;
-	return (binary_tree);
+/* retorna um array com os bytes da árvore escrita no arquivo, após os dois
+ * primeiros bytes, de acordo com o tamanho da árvore recebido */
+unsigned int *get_tree_array(FILE *input_file, unsigned int tree_size) {
+	unsigned int i;
+
+	/* cria um array com o tamanho da árvore recebido */
+	int *tree_array;
+	tree_array = (unsigned int *)malloc(sizeof(unsigned int)*(tree_size));
+	/* vai até o terceito byte do arquivo para receber os caracteres (o ter-
+	 * ceiro byte é o primeiro byte da árvore) */
+	fseek(input_file, 2, ZERO);
+
+	/* recebe os caracteres em sequencia tree_size vezes */
+	for (i = ZERO; i <= tree_size; i++) {
+		tree_array[i] = getc(input_file);
+	}
+	return (tree_array); /* retorna o endereço para o array criado */
 }
 
-/* cria um novo nó com o caracter recebido e o insere à direita do nó recebi-
- * do, retorna o próprio nó recebido */
-node_t *insert_right(node_t *binary_tree, unsigned int character) {
-	node_t *new_node = create_node(character);
-	binary_tree->right = new_node;
-	return (binary_tree);
-}
-
-/* cria um nó de uma árvore com um caracter e sem filhos e o retorna */
-node_t *create_node(unsigned int character) {
+/* cria uma árvore com o caracter e árvores esquerda e direita, respectivamen-
+ * te, e retorna o endereço para a árvore criada */
+node_t *create_node(unsigned int character, node_t *left, node_t *right) {
 	node_t *new_node = (node_t *)malloc(sizeof(node_t));
 	new_node->character = character;
-
-	/* garante que não aponta para nada */
-	new_node->left = NULL;
-	new_node->right = NULL;
-	
-	return (new_node); /* retorna o nó criado */
+	new_node->left = left;
+	new_node->right = right;
+	return (new_node);
 }
 
-/* cria uma pilha vazia e a retorna */
-stack_t *create_stack() {
-    stack_t *new_stack = (stack_t *)malloc(sizeof(stack_t));
-    new_stack->top = NULL;
-    return (new_stack);
+/* cria uma árvore que é recebida escrita em pré-ordem em um array e a retor-
+ * na */
+node_t *make_tree(unsigned int **tree_array) {
+	node_t *left;
+
+	/* se o nó for *, faz o nó da esquerda primeiro, depois anda uma posição
+	 * no array (após o nó da esquerda) e retorna o nó da direita já incluso
+	 * no nó que está sendo criado com o * */
+	if (**tree_array == '*') {
+
+		*tree_array = (*tree_array + 1); /* anda uma posição no array */
+		left = make_tree(tree_array);
+		*tree_array = (*tree_array + 1); /* anda uma posição no array */
+		return (create_node('*', left, make_tree(tree_array)));
+
+	}
+	/* se o nó for \, retorna uma folha com o próximo caracter */
+	else if (*tree_array[ZERO] == '\\') {
+
+		*tree_array = (*tree_array + 1); /* anda uma posição no array */
+		return (create_node(**tree_array, NULL, NULL));
+
+	}
+
+	/* se o nó não for * nem \, retorna uma folha com o caracter atual */
+	return (create_node(**tree_array, NULL, NULL)); 
 }
-
-/* adiciona uma àrvore no topo da pilha */
-stack_t *push_to_stack(stack_t *stack, node_t *binary_tree) {
-    stack_t *new_stack = stack;
-    stack_element_t *new_element = (stack_element_t *)malloc(sizeof(stack_element_t));
-    new_element->binary_tree = binary_tree;
-    new_element->next_element = new_stack->top;
-    new_stack->top = new_element;
-
-    return (new_stack);
-}
-
-/* remove a árvore do topo da pilha e a retorna */
-node_t *pop_from_stack(stack_t *stack) {
-    node_t *poped_binary_tree = stack->top->binary_tree;
-    stack_element_t *poped_element = stack->top;
-
-    stack->top = stack->top->next_element;
-
-    /* libera a memória do elemento removido */
-    free (poped_element);
-
-    return (poped_binary_tree);
-}
-
-/* retorna uma cópia da árvore do topo da pilha, sem remover 
- * se a pilha estiver vazia, retorna NULL */
-node_t *peek_from_stack(stack_t *stack) {
-	/* se a pilha estiver vazia, retorna NULL */
-    if (is_empty_stack(stack))
-        return (NULL);
-
-    return (stack->top->binary_tree);
-}
-
-/* retorna TRUE caso a pilha esteja vazia e FALSE caso não esteja */
-bool is_empty_stack(stack_t *stack) {
-    return (stack->top == NULL);
-}
-
 
 /* retorna a árvore escrita em pré-ordem nos tree_size bytes após o segundo
  * byte no arquivo recebido */
 node_t *get_tree(FILE *input_file, unsigned int tree_size) {
-
 	if (tree_size == ZERO) {
 		return NULL;
 	}
 
-	node_t *root;
-	node_t *current_node;
+	/* recebe o array com a árvore em pré-ordem */
+	unsigned int *tree_array;
+	tree_array = get_tree_array(input_file, tree_size);
 
-	stack_t *tree_stack = create_stack();
-
-	bool escape_sequence = FALSE;
-
-	unsigned int i;
-
-	unsigned int tree_array[tree_size];
-
-	unsigned int current_char;
-
-	fseek(input_file, 2, ZERO);
-
-	for (i = ZERO; i <= tree_size; i++) {
-		tree_array[i] = getc(input_file);
-	}
-	i = ZERO;
-	current_char = tree_array[i++];
-	if ((tree_array[i] == '*') && (current_char == '\\')) {
-		escape_sequence = TRUE;
-		current_char = tree_array[i++];
-	}
-	root = create_node(current_char);
-	tree_stack = push_to_stack(tree_stack, root);
-	while (i < tree_size) {
-		current_node = peek_from_stack(tree_stack);
-		current_char = tree_array[i++];
-		if ((tree_array[i] == '*') && (current_char == '\\')) {
-			escape_sequence = TRUE;
-			
-			current_char = tree_array[i++];
-		
-		}
-		if ((current_char != '*') || (escape_sequence == TRUE)) {
-			current_node = insert_left(current_node, current_char);
-			if (i < tree_size) {
-				current_char = tree_array[i++];
-				if ((tree_array[i] == '*') && (current_char == '\\')) {
-					escape_sequence = TRUE;
-					current_char = tree_array[i++];
-				}
-				current_node = insert_right(current_node, current_char);
-				if ((current_char == '*') && (escape_sequence == FALSE)) {
-					tree_stack = push_to_stack(tree_stack, current_node->right);
-				}
-				else if (i < tree_size) {
-					while (((current_char != '*') && (i < tree_size)) || ((escape_sequence == TRUE) && (i < tree_size))) {
-						while (current_node->right != NULL) {
-							pop_from_stack(tree_stack);
-							current_node = peek_from_stack(tree_stack);
-						}
-						current_char = tree_array[i++];
-						if ((tree_array[i] == '*') && (current_char == '\\')) {
-							escape_sequence = TRUE;
-							current_char = tree_array[i++];
-						}
-						current_node = insert_right(current_node, current_char);
-						escape_sequence = FALSE;
-						if ((current_char == '*') && (escape_sequence == FALSE)) {
-							tree_stack = push_to_stack(tree_stack, current_node->right);
-						}
-						escape_sequence = FALSE;
-					}
-				}
-			}
-		}
-		else {
-			current_node = insert_left(current_node, current_char);
-			tree_stack = push_to_stack(tree_stack, current_node->left);
-		}
-	}
-	return (root);
+	/* retorna a árvore criada a partir do array recebido */
+	return (make_tree(&tree_array));
 }
 
 /* retorna o tamanho da árvore que está escrito nos 13 bits seguintes ao ta-
@@ -455,9 +354,13 @@ unsigned int get_tree_size(FILE *input_file) {
 	first_byte = getc(input_file); 
 	second_byte = getc(input_file);
 
+	/* apaga os três primeiros bits do primeiro byte, pois só interessa os 5
+	 * bits restantes */
 	first_byte = (first_byte << TRASH_BITS_QUANTITY);
 	first_byte = (first_byte >> TRASH_BITS_QUANTITY);
 
+	/* o tamanho da árvore é a união entre os 5 últimos bits do primeiro byte
+	 * e o segundo byte */
 	tree_size = ((first_byte << BYTE_SIZE) | second_byte);
 
 	return (tree_size); /* retorna o valor que estava escrito */
@@ -616,12 +519,17 @@ int bits_quantity(node_t *binary_tree, unsigned int character) {
 /* retorna TRUE se um caracter pertence a uma árvore */
 bool is_on_tree(node_t *binary_tree, unsigned int character) {
 	if (binary_tree != NULL) {
+		/* se o próprio nó for uma folha e tiver o caracter recebido, retorna
+		 * TRUE */
 		if (is_leaf(binary_tree) && binary_tree->character == character) {
 			return (TRUE);
 		}
+		/* se o nó não tiver o caracter recebido, retorna recursivamente para
+		 * a esquerda e para a direita do nó */
 		return (is_on_tree(binary_tree->left, character)
 				|| is_on_tree(binary_tree->right, character));
 	}
+	/* se o nó for NULL, retorna FALSE */
 	return (FALSE);
 }
 
@@ -673,8 +581,10 @@ int hash_function(int key, int addresses_quantity){
 }
 
 /* insere um elemento em uma hash table */
-void insert_on_hash_table(hash_table_t *hash_table, unsigned int key, int size,
-						  unsigned int b_char, int addresses_quantity) {
+void insert_on_hash_table(hash_table_t *hash_table, unsigned int key,
+							int size, unsigned int b_char,
+							int addresses_quantity) {
+
 	element_t *new_element = (element_t *)malloc(sizeof(element_t));;
 	int hash = hash_function(key, addresses_quantity);
 	new_element->key = key;
@@ -782,8 +692,8 @@ node_t *dequeue(queue_t *queue) {
     return (NULL); /* a fila está vazia */
 }
 
-/* retorna 1 caso a fila recebida esteja vazia e ZERO caso contrário */
-int is_empty_queue(queue_t *queue) {
+/* retorna TRUE caso a fila recebida esteja vazia e FALSE caso contrário */
+bool is_empty_queue(queue_t *queue) {
     return (queue->first == NULL);
 }
 
@@ -835,7 +745,8 @@ node_t *huffmanrize_queue(queue_t *queue){
  * * seja encontrado, imprime um contra-barra \ antes, como escape */
 void print_tree_pre_order(FILE *output_file, node_t *node_tree) {
 	if (node_tree != NULL) {
-		if (node_tree->character == '*' && is_leaf(node_tree)){
+		if (((node_tree->character == '*') || (node_tree->character == '\\'))
+			&& is_leaf(node_tree)){
 			fprintf(output_file, "%c", '\\');
 		}
 		fprintf(output_file, "%c", node_tree->character);
