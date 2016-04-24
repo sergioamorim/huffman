@@ -230,14 +230,18 @@ int main (int args_count, char *args[]) {
 	 * arquivo de entrada servirá para ser descomprimido em um arquivo de saí-
 	 * da */
 	else {
-		/* extrair arquivo */
-
+		/* receber o tamanho do lixo escrito nos três primeiros bits */
 		trash_size = get_trash_size(input_file);
 
+		/* receber o tamanho da árvore escrito nos 13 bits após o tamanho do
+		 * lixo */
 		unsigned int tree_size = get_tree_size(input_file);
 
+		/* criar uma árvore de huffman de acordo com a que está escrita no
+		 * arquivo */
 		node_t *huff_tree = get_tree(input_file, tree_size);
 
+		/* descomprimir o arquivo de entrada de acordo com a árvore criada */
 		decompress(input_file, trash_size, tree_size, huff_tree, output_file);
 
 	}
