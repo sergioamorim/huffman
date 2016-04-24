@@ -144,7 +144,7 @@ node_t *get_tree(FILE *, unsigned int);
 
 /* cria uma árvore que é recebida escrita em pré-ordem em um array e a retor-
  * na */
-node_t *make_tree(unsigned int **)
+node_t *make_tree(unsigned int **);
 
 /* cria um nó de uma árvore com um caracter e sem filhos */
 node_t *create_node(unsigned int, node_t *, node_t *);
