@@ -105,6 +105,9 @@ int bits_quantity(node_t *, unsigned int);
  * na */
 hash_table_t* create_hash_table(int);
 
+/* libera a memória ocupada por todos os elementos de uma hash table */
+void free_hash_table(hash_table_t *, int);
+
 /* insere um elemento em uma hash table */
 void insert_on_hash_table(hash_table_t *hash_table, unsigned int key,
 							int size, unsigned int b_char,
@@ -145,6 +148,9 @@ node_t *get_tree(FILE *, unsigned int);
 /* cria uma árvore que é recebida escrita em pré-ordem em um array e a retor-
  * na */
 node_t *make_tree(unsigned int **);
+
+/* libera a memória ocupada por todos os nós de uma árvore binária */
+void free_binary_tree(node_t *);
 
 /* cria um nó de uma árvore com um caracter e sem filhos */
 node_t *create_node(unsigned int, node_t *, node_t *);
@@ -336,8 +342,28 @@ node_t *get_tree(FILE *input_file, unsigned int tree_size) {
 	unsigned int *tree_array;
 	tree_array = get_tree_array(input_file, tree_size);
 
-	/* retorna a árvore criada a partir do array recebido */
-	return (make_tree(&tree_array));
+	/* guarda a primeira posição do array, que será modificado pela função que
+	 * cria a árvore, para que a memória alocada para o array possa ser libe-
+	 * rada depois */
+	unsigned int *tree_array_zero;
+	tree_array_zero = tree_array;
+
+	/* recebe a árvore criada a partir do array recebido */
+	node_t *tree_root = make_tree(&tree_array);
+	
+	/* libera a memória alocada para o array */
+	free(tree_array_zero);
+
+	return (tree_root);
+}
+
+/* libera a memória ocupada por todos os nós de uma árvore binária */
+void free_binary_tree(node_t *node) {
+	if (node != NULL) {
+		free_binary_tree(node->left);
+		free_binary_tree(node->right);
+		free(node);
+	}
 }
 
 /* retorna o tamanho da árvore que está escrito nos 13 bits seguintes ao ta-
@@ -572,6 +598,16 @@ hash_table_t* create_hash_table(int addresses_quantity) {
 		hash_table->table[i] = NULL;
 	}
 	return hash_table;
+}
+
+/* libera a memória ocupada por todos os elementos de uma hash table */
+void free_hash_table(hash_table_t *hash_table, int addresses_quantity) {
+	int i;
+	for (i = ZERO; i < addresses_quantity; i++) {
+		if (hash_table->table[i] != NULL) {
+			free(hash_table->table[i]);
+		}
+	}
 }
 
 /* função para retornar o valor hasheado de uma chave */

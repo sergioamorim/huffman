@@ -223,6 +223,11 @@ int main (int args_count, char *args[]) {
 		/* escreve o tamanho do lixo nos 3 primeiros bits do arquivo */
 		write_trash_size(output_file, trash_size);
 
+		/* libera a memória alocada para a fila/árvore e para a hash table */
+		free(tree);
+		free_binary_tree(tree_root);
+		free_hash_table(chars_table, ASCII_MAX);
+		free(chars_table);
 	}
 	/* caso o argumento para compressão não seja passado, então o de extração
 	 * foi, pois a foi feita a verificação que apenas um dos dois deveria ser 
@@ -244,11 +249,18 @@ int main (int args_count, char *args[]) {
 		/* descomprimir o arquivo de entrada de acordo com a árvore criada */
 		decompress(input_file, trash_size, tree_size, huff_tree, output_file);
 
+		/* libera a memória alocada para a árvore */
+		free_binary_tree(huff_tree);
+
 	}
 
 	/* fecha os arquivos abertos */
 	fclose(input_file);
 	fclose(output_file);
+
+	/* libera a memória alocada para a string com o nome o caminho para o di-
+	 * retório do projeto */
+	free(project_path);
 
 	return (ZERO); /* o programa foi executado com sucesso */
 }
