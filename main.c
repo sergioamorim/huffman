@@ -180,8 +180,9 @@ int main (int args_count, char *args[]) {
 		for (i = ZERO; i < ASCII_MAX; i++) {
 			ascii[i] = ZERO;
 		}
-
-		unsigned int current_char; /* guardará cada caracter obtido temporariamente */
+		
+		/* guardará cada caracter obtido temporariamente */
+		unsigned int current_char; 
 
 		/* recebe caracter por c aracter do arquivo e incrementa a posição cor-
 		 * respondente no array de quantidades */

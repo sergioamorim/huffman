@@ -44,7 +44,8 @@ typedef struct hash_table_t__ {
 hash_table_t *create_hash_table(int);
 
 /* insere um elemento em uma hash table */
-void insert_on_hash_table (hash_table_t *, unsigned int, int, unsigned int, int);
+void insert_on_hash_table (hash_table_t *, unsigned int, int, unsigned int,
+							int);
 
 /* retorna um elemento de uma hash table */
 bit_char_t get_of_hash_table (hash_table_t *, int);
@@ -398,7 +399,8 @@ unsigned int get_trash_size(FILE *input_file) {
 	unsigned int first_byte;
 	fseek(input_file, ZERO, ZERO); /* volta ao início do arquivo */
 	first_byte = getc(input_file); /* recebe o primeiro byte do arquivo */
-	trash_size = (unsigned int)(first_byte >> (BYTE_SIZE - TRASH_BITS_QUANTITY));
+	trash_size = (unsigned int)(first_byte 
+								>> (BYTE_SIZE - TRASH_BITS_QUANTITY));
 	return (trash_size); /* retorna o valor que estava escrito */
 }
 
@@ -426,7 +428,7 @@ void write_trash_size(FILE *output_file, unsigned int trash_size) {
 unsigned int write_compressed(FILE *input_file, FILE *output_file, 
 								hash_table_t *chars_table) {
 
-		unsigned int trash_size = ZERO; /* tamanho do lixo, que será retornado */
+		unsigned int trash_size = ZERO; /* tamanho do lixo, será retornado */
 		int writing_index = BYTE_SIZE; 
 		unsigned int bits_to_next_char = (unsigned int)ZERO;
 		unsigned int writing_char = (unsigned int)ZERO;
@@ -455,7 +457,8 @@ unsigned int write_compressed(FILE *input_file, FILE *output_file,
 			 * completar o byte corrente, escreve-o, grava o byte corrente no
 			 * arquivo e renova o byte de escrita */
 			else if ((writing_index - current_bit_char.size) == ZERO) {
-				writing_char = (unsigned int)(writing_char | current_bit_char.b_char);
+				writing_char = (unsigned int)(writing_char
+												| current_bit_char.b_char);
 				fprintf(output_file, "%c", writing_char);
 				writing_index = BYTE_SIZE;
 				writing_char = (unsigned int)ZERO;
@@ -463,8 +466,10 @@ unsigned int write_compressed(FILE *input_file, FILE *output_file,
 			/* se ainda sobrar espaço no byte corrente depois de escrever o
 			 * caracter codificado, apenas faz isso */
 			else {
-				writing_char = (unsigned int)(writing_char | (current_bit_char.b_char <<
-						   (writing_index - current_bit_char.size)));
+				writing_char = (unsigned int)(writing_char
+								| (current_bit_char.b_char
+									<< (writing_index
+										- current_bit_char.size)));
 				writing_index -= current_bit_char.size;
 			}
 			current_char = (unsigned int)getc(input_file);
@@ -569,7 +574,8 @@ unsigned int make_bit_char(node_t *huff_tree, unsigned int character) {
 		 * ou não o último bit, enquanto arrasta os bits anteriores para a
 		 * esquerda */
 		while(current_node != NULL
-				&& !(is_leaf(current_node) && (current_node->character == character))) {
+				&& !(is_leaf(current_node) && (current_node->character 
+												== character))) {
 			/* se o caracter estiver à direita na árvore, seta o último bit e
 			 * anda para a direita */
 			if (is_on_tree(current_node->right, character)) {
@@ -647,7 +653,8 @@ queue_t *create_queue() {
 }
 
 /* enfileira um caracter à fila recebida e retorna a própia fila */
-queue_t *enqueue(queue_t *queue, unsigned int quantity, unsigned int character) {
+queue_t *enqueue(queue_t *queue, unsigned int quantity,
+					unsigned int character) {
     
     node_t *new_node = (node_t *)malloc(sizeof(node_t));
     node_t *current_node = queue->first;
@@ -794,7 +801,8 @@ void print_tree_pre_order(FILE *output_file, node_t *node_tree) {
 /* retorna ZERO se conseguir escrever o tamanho dá árvore no arquivo ou ERROR
  * se ocorrer algum erro; ao escrever o tamanho, o caracter de escape é levado
  * em consideração */
-int print_size_of_tree(FILE *output_file, node_t *tree_root, unsigned int escapes_sequences) {
+int print_size_of_tree(FILE *output_file, node_t *tree_root,
+						unsigned int escapes_sequences) {
 	
 	unsigned int size_of_tree;
 	size_of_tree = (unsigned int)tree_size(tree_root);
@@ -802,7 +810,8 @@ int print_size_of_tree(FILE *output_file, node_t *tree_root, unsigned int escape
 
 	/* verifica se é possível escrever a árvore em 13 bits */
 	if (size_of_tree>8191) {
-		fprintf(stderr, "ERRO: o tamanho da árvore não pode ser maior que 8191.\n");
+		fprintf(stderr, "ERRO: o tamanho da árvore não pode ser maior que");
+		fprintf(stderr, " 8191.\n");
 		fclose(output_file);
 		return (ERROR);
 	}
@@ -839,7 +848,7 @@ int print_size_of_tree(FILE *output_file, node_t *tree_root, unsigned int escape
 /* retorna o número de nós da árvore */
 int tree_size(node_t *node_tree) {
 	if (node_tree != NULL) {
-		return ((tree_size(node_tree->left) + tree_size(node_tree->right) + 1));
+		return (tree_size(node_tree->left) + tree_size(node_tree->right + 1));
 	}
 	return (ZERO);
 }
@@ -855,7 +864,8 @@ int print_header(FILE *output_file, node_t *tree_root) {
 
 	/* se a função de imprimir o tamanho da árvore retornar ERROR, retorna
 	 * ERROR também */
-	if (print_size_of_tree(output_file, tree_root, escapes_sequences) == ERROR) {
+	if (print_size_of_tree(output_file, tree_root, escapes_sequences)
+		== ERROR) {
 		return (ERROR);
 	}
 
