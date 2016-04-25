@@ -139,7 +139,7 @@ int main (int args_count, char *args[]) {
 	}
 
 	/* abre o arquivo de entrada para leitura */
-	input_file = fopen(input_file_name, "r");
+	input_file = fopen(input_file_name, "rb");
 
 	/* caso não seja possível abrir o arquivo de entrada, uma mensagem de erro
 	 * é exibida e o programa é encerrado */
@@ -151,7 +151,7 @@ int main (int args_count, char *args[]) {
 	}
 
 	/* abre o arquivo de saída para escrita */
-	output_file = fopen(output_file_name, "w+");
+	output_file = fopen(output_file_name, "wb+");
 
 	/* caso não seja possível abrir o arquivo de saída, uma mensagem de erro é
 	 * exibida e o programa é encerrado */
