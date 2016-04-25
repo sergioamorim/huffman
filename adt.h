@@ -282,7 +282,7 @@ unsigned int *get_tree_array(FILE *input_file, unsigned int tree_size) {
 	fseek(input_file, 2, ZERO);
 
 	/* recebe os caracteres em sequencia tree_size vezes */
-	for (i = ZERO; i <= tree_size; i++) {
+	for (i = ZERO; i < tree_size; i++) {
 		tree_array[i] = getc(input_file);
 	}
 	return (tree_array); /* retorna o endereço para o array criado */
@@ -301,13 +301,13 @@ node_t *create_node(unsigned int character, node_t *left, node_t *right) {
 /* cria uma árvore que é recebida escrita em pré-ordem em um array e a retor-
  * na */
 node_t *make_tree(unsigned int **tree_array) {
-	node_t *left;
 
 	/* se o nó for *, faz o nó da esquerda primeiro, depois anda uma posição
 	 * no array (após o nó da esquerda) e retorna o nó da direita já incluso
 	 * no nó que está sendo criado com o * */
 	if (**tree_array == '*') {
 
+		node_t *left;
 		*tree_array = (*tree_array + 1); /* anda uma posição no array */
 		left = make_tree(tree_array);
 		*tree_array = (*tree_array + 1); /* anda uma posição no array */
@@ -315,8 +315,7 @@ node_t *make_tree(unsigned int **tree_array) {
 
 	}
 	/* se o nó for \, retorna uma folha com o próximo caracter */
-	else if (*tree_array[ZERO] == '\\') {
-
+	else if (**tree_array == '\\') {
 		*tree_array = (*tree_array + 1); /* anda uma posição no array */
 		return (create_node(**tree_array, NULL, NULL));
 
