@@ -848,7 +848,7 @@ int print_size_of_tree(FILE *output_file, node_t *tree_root,
 /* retorna o número de nós da árvore */
 int tree_size(node_t *node_tree) {
 	if (node_tree != NULL) {
-		return (tree_size(node_tree->left) + tree_size(node_tree->right + 1));
+		return (tree_size(node_tree->left) + tree_size(node_tree->right) + 1);
 	}
 	return (ZERO);
 }
@@ -868,6 +868,7 @@ int print_header(FILE *output_file, node_t *tree_root) {
 		== ERROR) {
 		return (ERROR);
 	}
+
 
 	print_tree_pre_order(output_file, tree_root);
 
