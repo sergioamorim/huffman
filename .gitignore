@@ -37,3 +37,6 @@
 *.b
 *.huff
 
+# Eclipse files
+.cproject
+.project
