@@ -374,7 +374,7 @@ unsigned int get_tree_size(FILE *input_file) {
 	unsigned char first_byte;
 	unsigned int second_byte;
 
-	fseek(input_file, ZERO, ZERO); /* volta ao início do arquivo */
+	fseek(input_file, ZERO, SEEK_SET); /* volta ao início do arquivo */
 
 	/* recebe os dois primeiros bytes do arquivo */
 	first_byte = getc(input_file); 
@@ -397,7 +397,7 @@ unsigned int get_tree_size(FILE *input_file) {
 unsigned int get_trash_size(FILE *input_file) {
 	unsigned int trash_size = ZERO;
 	unsigned int first_byte;
-	fseek(input_file, ZERO, ZERO); /* volta ao início do arquivo */
+	fseek(input_file, ZERO, SEEK_SET); /* volta ao início do arquivo */
 	first_byte = getc(input_file); /* recebe o primeiro byte do arquivo */
 	trash_size = (unsigned int)(first_byte 
 								>> (BYTE_SIZE - TRASH_BITS_QUANTITY));
@@ -414,12 +414,12 @@ bool is_leaf(node_t *binary_tree) {
 void write_trash_size(FILE *output_file, unsigned int trash_size) {
 	unsigned int first_byte;
 	unsigned int writing_char;
-	fseek(output_file, ZERO, ZERO); /* volta ao início do arquivo */
+	fseek(output_file, ZERO, SEEK_SET); /* volta ao início do arquivo */
 	first_byte = getc(output_file); /* recebe o primeiro byte do arquivo */
 	writing_char = ZERO; /* inicializa o byte que será escrito*/
 	writing_char = (first_byte | (trash_size << 
 					(BYTE_SIZE - TRASH_BITS_QUANTITY)));
-	fseek(output_file, ZERO, ZERO); /* volta ao início do arquivo */
+	fseek(output_file, ZERO, SEEK_SET); /* volta ao início do arquivo */
 	fprintf(output_file, "%c", writing_char); /* escreve o byte */
 }
 
@@ -434,7 +434,7 @@ unsigned int write_compressed(FILE *input_file, FILE *output_file,
 		unsigned int writing_char = (unsigned int)ZERO;
 		bit_char_t current_bit_char;
 		/* volta ao início do arquivo para lê-lo por completo */
-		fseek(input_file, ZERO, ZERO);
+		fseek(input_file, ZERO, SEEK_SET);
 		unsigned int current_char = (unsigned int)getc(input_file);
 		while ((signed int)current_char != EOF) {
 			current_bit_char = get_of_hash_table(chars_table, current_char);
@@ -860,7 +860,7 @@ int print_header(FILE *output_file, node_t *tree_root) {
 	unsigned int escapes_sequences = ZERO;
 	escapes_sequences = get_escape_sequences(tree_root);
 
-	fseek(output_file, ZERO, ZERO);
+	fseek(output_file, ZERO, SEEK_SET);
 
 	/* se a função de imprimir o tamanho da árvore retornar ERROR, retorna
 	 * ERROR também */
