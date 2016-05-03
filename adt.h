@@ -442,16 +442,61 @@ unsigned int write_compressed(FILE *input_file, FILE *output_file,
 			 * rente, escreve até onde der, grava no arquivo, e escreve o que
 			 * faltou no próximo byte */
 			if ((writing_index - current_bit_char.size) < ZERO) {
+
 				bits_to_next_char = ((writing_index
 										- current_bit_char.size) * (-1));
-				writing_char = (writing_char | (current_bit_char.b_char >>
-						   bits_to_next_char));
-				fprintf(output_file, "%c", writing_char);
-				writing_char = (unsigned int)ZERO;
-				writing_index = BYTE_SIZE;
-				writing_char = (current_bit_char.b_char <<
-									(writing_index - bits_to_next_char));
-				writing_index -= bits_to_next_char;
+				/* pode acontecer de o código para um byte ser maior do que 
+				 * 8 bits, então é necessário tratar os casos onde, mesmo es-
+				 * crevendo no próximo byte, não vai ser possível escrevê-lo
+				 * por inteiro. caso o restante do código seja menor que um
+				 * byte, podemos escrever o restante do código no próximo byte
+				 * e atualizar o writing_index, para sinalizar em que parte do
+				 * byte estamos */
+				if (bits_to_next_char < BYTE_SIZE) {
+					writing_char = (writing_char | (current_bit_char.b_char >>
+							   bits_to_next_char));
+					fprintf(output_file, "%c", writing_char);
+					writing_char = (unsigned int)ZERO;
+					writing_index = BYTE_SIZE;
+					writing_char = (current_bit_char.b_char <<
+										(writing_index - bits_to_next_char));
+					writing_index -= bits_to_next_char;
+				}
+				/* caso o restante do código seja exatamente 1 byte, basta
+				 * escrevê-lo no arquivo */
+				else if (bits_to_next_char == BYTE_SIZE) {
+					writing_char = (writing_char | (current_bit_char.b_char >>
+							   bits_to_next_char));
+					fprintf(output_file, "%c", writing_char);
+					writing_char = (unsigned int)ZERO;
+					writing_index = BYTE_SIZE;
+					writing_char = current_bit_char.b_char;
+					writing_index -= bits_to_next_char;
+					fprintf(output_file, "%c", writing_char);
+					writing_char = (unsigned int)ZERO;
+					writing_index = BYTE_SIZE;
+				}
+				/* caso o restante do código seja maior que um byte, é preciso
+				 * escrever as três partes do código individualmente: primeiro
+				 * a parte que cabe no byte atual, depois a parte central do
+				 * código e, depois, o final deve ser escrito no próximo byte
+				 */
+				else {
+					writing_char = (writing_char | (current_bit_char.b_char >>
+							   bits_to_next_char));
+					fprintf(output_file, "%c", writing_char);
+					writing_char = (unsigned int)ZERO;
+					writing_index = BYTE_SIZE;
+					writing_char = (current_bit_char.b_char >>
+										(bits_to_next_char - BYTE_SIZE));
+					fprintf(output_file, "%c", writing_char);
+					writing_char = (unsigned int)ZERO;
+					writing_index = BYTE_SIZE;
+					writing_char = (current_bit_char.b_char <<
+										(BYTE_SIZE - 
+											(bits_to_next_char - BYTE_SIZE)));
+					writing_index -= (bits_to_next_char - BYTE_SIZE);
+				}
 			}
 			/* se o caracter codificado ocupar exatamente o que falta para
 			 * completar o byte corrente, escreve-o, grava o byte corrente no
